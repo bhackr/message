@@ -1,4 +1,67 @@
-/* Base styles */
+/* Graph styles */
+.graph-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+    margin: 20px 0;
+    background-color: white;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.graph-info {
+    background-color: white;
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.graph-info h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.graph-info ul {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.graph-info li {
+    margin-bottom: 5px;
+}
+
+.binary-examples {
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+.binary-examples table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.binary-examples th, 
+.binary-examples td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.binary-examples th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.binary-examples tr:nth-child(even) {
+    background-color: #f9f9f9;
+}/* Base styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
