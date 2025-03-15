@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message.bhackr.com - Binary to Text Decoder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .input-group, .output-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .message {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 20px;
+        }
+        .decoded-message {
+            background-color: #eafaf1;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #2ecc71;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Binary to Text Decoder</h1>
+        
+        <div class="message">
+            <p>This tool converts binary code to readable text. Enter binary data (ones and zeros) in the input field and click "Decode" to convert it to text.</p>
+        </div>
+        
+        <div class="input-group">
+            <label for="binaryInput">Binary Input:</label>
+            <textarea id="binaryInput" placeholder="Enter binary code here (e.g., 01001000 01100101 01101100 01101100 01101111)">01000011 01111010 01100101 01110011 01100011 00101100 00100000 01101010 01100101 01110011 01110100 01100101 01101101 00100000 01010100 01101111 01101101 00100001 00100000 01001111 01110100 01101111 00100000 01100101 01111000 01110000 01100101 01110010 01111001 01101101 01100101 01101110 01110100 00100000 01110011 01101111 01101100 01100101 01100011 01111010 01101110 01111001 00100000 01110100 01100101 01110011 01110100 01110101 01101010 01100001 01100011 01111001 00100000 01111010 01100100 01101111 01101100 01101110 01101111 01110011 01100011 01101001 00100000 01100001 01101100 01100111 01101111 01110010 01111001 01110100 01101101 01101111 01110111 00101110 00100000 01001010 01100101 01110011 01101100 01101001 00100000 01110100 01101111 00100000 01100011 01111010 01111001 01110100 01100001 01110011 01111010 00101100 00100000 01110011 01110100 01101111 01101001 01101110 01101001 01100101 00100001 00100000 11110000 10011111 10010011 10000001  
+01001111 01100100 01110111 01101001 01100101 01111010 00100000 01100010 01101000 01100001 01100011 01101011 01110010 00101110 01100011 01101111 01101101 00100000 01101111 00100000 00110001 00110011 00111010 00110000 00110000 00101110 00100000 01010000 01110010 01101111 01110011 01111010 01100101 00100000 01110000 01101111 01100100 01111010 01101001 01100101 01101100 00100000 01110011 01101001 01100101 00100000 01110100 01100001 01111100 01100001 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 01110011 01100011 01101001 01100001 00100000 01111010 00100000 00110011 00100000 01101111 01110011 01101111 01100010 01100001 01101101 01101001 00101110</textarea>
+        </div>
+        
+        <div class="controls">
+            <button id="decodeBtn">Decode</button>
+            <button id="clearBtn">Clear</button>
+        </div>
+        
+        <div class="output-group">
+            <label for="textOutput">Decoded Text:</label>
+            <textarea id="textOutput" readonly placeholder="Decoded text will appear here"></textarea>
+        </div>
+        
+        <div id="decodedMessageDisplay" class="decoded-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const binaryInput = document.getElementById('binaryInput');
+            const textOutput = document.getElementById('textOutput');
+            const decodeBtn = document.getElementById('decodeBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const decodedMessageDisplay = document.getElementById('decodedMessageDisplay');
+            
+            // Auto-decode on page load
+            decodeBinary();
+            
+            decodeBtn.addEventListener('click', decodeBinary);
+            
+            clearBtn.addEventListener('click', function() {
+                binaryInput.value = '';
+                textOutput.value = '';
+                decodedMessageDisplay.style.display = 'none';
+            });
+            
+            function decodeBinary() {
+                const binary = binaryInput.value.trim();
+                if (!binary) {
+                    textOutput.value = 'Please enter binary code';
+                    return;
+                }
+                
+                try {
+                    // Process the binary input, allowing for spaces and line breaks
+                    const binaryGroups = binary.split(/\s+/);
+                    let result = '';
+                    
+                    // Create an array to hold all the binary values as bytes
+                    const bytes = [];
+                    for (let i = 0; i < binaryGroups.length; i++) {
+                        const group = binaryGroups[i];
+                        if (group.length > 0) {
+                            // Convert binary to byte
+                            const byte = parseInt(group, 2);
+                            bytes.push(byte);
+                        }
+                    }
+                    
+                    // Convert bytes to a UTF-8 string
+                    const uint8Array = new Uint8Array(bytes);
+                    const decoder = new TextDecoder('utf-8');
+                    result = decoder.decode(uint8Array);
+                    
+                    textOutput.value = result;
+                    
+                    // Display the decoded message in a nicer format
+                    decodedMessageDisplay.textContent = result;
+                    decodedMessageDisplay.style.display = 'block';
+                    
+                } catch (error) {
+                    textOutput.value = 'Error decoding: ' + error.message;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
