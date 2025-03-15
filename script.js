@@ -163,46 +163,58 @@ document.addEventListener('DOMContentLoaded', function() {
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
+            const trimmedLine = line.trim();
             
-            // Sprawdź, czy linia zaczyna się od #
-            if (line.trim().startsWith('#')) {
-                // Jeśli tak, zachowaj ją bez zmian
-                resultText += line;
-            } else {
-                // Zbierz wszystkie grupy binarne z linii
-                const binaryGroups = line.match(/[01]{8}/g) || [];
-                const bytes = [];
-                
-                for (let group of binaryGroups) {
-                    try {
-                        // Konwertuj grupę binarną na bajt
-                        const byte = parseInt(group, 2);
-                        if (!isNaN(byte)) {
-                            bytes.push(byte);
-                        }
-                    } catch (e) {
-                        console.warn("Error parsing binary group:", group, e);
-                    }
-                }
-                
-                // Konwertuj wszystkie bajty na raz do tekstu UTF-8
-                if (bytes.length > 0) {
-                    try {
-                        const uint8Array = new Uint8Array(bytes);
-                        const decoder = new TextDecoder('utf-8');
-                        resultText += decoder.decode(uint8Array);
-                    } catch (e) {
-                        console.warn("Error decoding bytes:", e);
-                        // W przypadku błędu, dodaj oryginalne grupy
-                        resultText += binaryGroups.join(' ');
-                    }
+            // Podziel linię na słowa i białe znaki
+            const parts = line.split(/(\s+)|(\#[^\s]+)/g).filter(Boolean);
+            
+            for (let part of parts) {
+                // Sprawdź, czy część jest hashtagiem (zaczyna się od #)
+                if (part.startsWith('#')) {
+                    // Zachowaj hashtag bez zmian
+                    resultText += part;
+                } else if (/^\s+$/.test(part)) {
+                    // Jeśli to biały znak, zachowaj go
+                    resultText += part;
                 } else {
-                    // Jeśli nie ma poprawnych grup binarnych, zachowaj oryginalną linię
-                    resultText += line;
+                    // Sprawdź czy to kod binarny
+                    const binaryGroups = part.match(/[01]{8}/g) || [];
+                    
+                    if (binaryGroups.length > 0) {
+                        // To jest kod binarny, dekoduj go
+                        const bytes = [];
+                        for (let group of binaryGroups) {
+                            try {
+                                const byte = parseInt(group, 2);
+                                if (!isNaN(byte)) {
+                                    bytes.push(byte);
+                                }
+                            } catch (e) {
+                                console.warn("Error parsing binary group:", group, e);
+                            }
+                        }
+                        
+                        // Dekoduj wszystkie bajty na raz
+                        if (bytes.length > 0) {
+                            try {
+                                const uint8Array = new Uint8Array(bytes);
+                                const decoder = new TextDecoder('utf-8');
+                                resultText += decoder.decode(uint8Array);
+                            } catch (e) {
+                                console.warn("Error decoding bytes:", e);
+                                resultText += part;
+                            }
+                        } else {
+                            resultText += part;
+                        }
+                    } else {
+                        // To nie jest kod binarny, zachowaj bez zmian
+                        resultText += part;
+                    }
                 }
             }
             
-            // Dodaj znak nowej linii na końcu każdej linii (oprócz ostatniej)
+            // Dodaj znak nowej linii po każdej linii (oprócz ostatniej)
             if (i < lines.length - 1) {
                 resultText += '\n';
             }
@@ -218,30 +230,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let result = '';
         
-        // Podziel tekst na linie
-        const lines = text.split(/\r?\n/);
+        // Podziel tekst na słowa, hashtagi i białe znaki
+        const parts = text.split(/(\s+)|(\#[^\s]+)/g).filter(Boolean);
         
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            
-            // Sprawdź, czy linia zaczyna się od #
-            if (line.trim().startsWith('#')) {
-                // Jeśli tak, zachowaj ją bez zmian
-                result += line;
+        for (let part of parts) {
+            // Sprawdź, czy część jest hashtagiem (zaczyna się od #)
+            if (part.startsWith('#')) {
+                // Zachowaj hashtag bez zmian
+                result += part;
+            } else if (/^\s+$/.test(part)) {
+                // Jeśli to biały znak, zachowaj go
+                result += part;
             } else {
-                // Enkoduj całą linię jako jeden blok UTF-8
+                // Enkoduj normalny tekst do binarnego
                 const encoder = new TextEncoder();
-                const bytes = encoder.encode(line);
+                const bytes = encoder.encode(part);
                 
                 // Konwertuj każdy bajt na reprezentację binarną i połącz spacjami
                 result += Array.from(bytes)
                     .map(byte => byte.toString(2).padStart(8, '0'))
                     .join(' ');
-            }
-            
-            // Dodaj znak nowej linii na końcu każdej linii (oprócz ostatniej)
-            if (i < lines.length - 1) {
-                result += '\n';
             }
         }
         
@@ -290,108 +298,115 @@ document.addEventListener('DOMContentLoaded', function() {
         const binary = binaryInput.value;
         const text = textOutput.value;
         
-        // Podziel wejście na linie
-        const binaryLines = binary.split(/\r?\n/);
-        const textLines = text.split(/\r?\n/);
-        
         let binaryHtml = '';
         let textHtml = '';
         
-        // Przetwarzaj każdą linię oddzielnie
-        for (let lineIndex = 0; lineIndex < binaryLines.length; lineIndex++) {
-            const binaryLine = binaryLines[lineIndex];
-            
-            // Sprawdź, czy linia zaczyna się od #
-            if (binaryLine.trim().startsWith('#')) {
-                // Jeśli tak, podświetl całą linię na specjalny kolor dla hashtagów
+        // Podziel dane binarne na części: hashtagi, kod binarny i białe znaki
+        const binaryParts = binary.split(/(\s+)|(\#[^\s]+)/g).filter(Boolean);
+        let textIndex = 0;
+        
+        // Iteruj przez części binarne
+        for (let part of binaryParts) {
+            // Sprawdź, czy część jest hashtagiem
+            if (part.startsWith('#')) {
                 const hashtagColor = '#e6f7ff'; // Jasnoniebieski kolor dla hashtagów
-                binaryHtml += `<span style="background-color: ${hashtagColor}">${binaryLine}</span>`;
+                binaryHtml += `<span style="background-color: ${hashtagColor}">${part}</span>`;
                 
-                // Znajdź odpowiadającą linię w tekście
-                if (lineIndex < textLines.length && textLines[lineIndex].trim().startsWith('#')) {
-                    textHtml += `<span style="background-color: ${hashtagColor}">${escapeHtml(textLines[lineIndex])}</span>`;
-                } else if (lineIndex < textLines.length) {
-                    textHtml += escapeHtml(textLines[lineIndex]);
+                // Znajdź ten sam hashtag w tekście
+                if (text.indexOf(part, textIndex) === textIndex) {
+                    textHtml += `<span style="background-color: ${hashtagColor}">${escapeHtml(part)}</span>`;
+                    textIndex += part.length;
                 }
+            } else if (/^\s+$/.test(part)) {
+                // Jeśli to biały znak, zachowaj go
+                binaryHtml += part;
                 
-                // Dodaj znak nowej linii, jeśli to nie jest ostatnia linia
-                if (lineIndex < binaryLines.length - 1) {
-                    binaryHtml += '\n';
-                    textHtml += '\n';
+                // Aktualizuj indeks tekstu dla białych znaków
+                const spaceLength = Math.min(part.length, text.length - textIndex);
+                if (spaceLength > 0) {
+                    textHtml += text.substr(textIndex, spaceLength);
+                    textIndex += spaceLength;
                 }
+            } else {
+                // Sprawdź czy to kod binarny
+                const binaryGroups = part.match(/[01]{8}/g) || [];
                 
-                continue;
-            }
-            
-            // Dla normalnych linii, podziel na części
-            const binaryParts = binaryLine.split(/(\s+)/);
-            let currentTextIndex = 0;
-            let currentTextLine = (lineIndex < textLines.length) ? textLines[lineIndex] : '';
-            
-            // Iteruj przez każdą część w linii binarnej
-            for (let part of binaryParts) {
-                // Jeśli część jest białym znakiem, zachowaj go
-                if (/^\s+$/.test(part)) {
-                    binaryHtml += part;
-                    continue;
-                }
-                
-                // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
-                if (/^[01]+$/.test(part)) {
-                    try {
-                        // Generuj kolor dla tej części binarnej
-                        const color = getColorForBinaryPattern(part);
-                        binaryHtml += `<span class="highlighted" style="background-color: ${color}">${part}</span>`;
-                        
-                        // Konwertuj na znak, aby znaleźć odpowiadający tekst
-                        const byte = parseInt(part, 2);
-                        if (!isNaN(byte)) {
-                            const uint8Array = new Uint8Array([byte]);
-                            const decoder = new TextDecoder('utf-8');
-                            const decodedChar = decoder.decode(uint8Array);
-                            
-                            // Znajdź ten znak w wyjściowym tekście jeśli możliwe
-                            if (currentTextIndex < currentTextLine.length && 
-                                currentTextLine[currentTextIndex] === decodedChar) {
-                                textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(decodedChar)}</span>`;
-                                currentTextIndex++;
+                if (binaryGroups.length > 0) {
+                    // To jest kod binarny
+                    let bytes = [];
+                    let groupsHtml = '';
+                    
+                    for (let group of binaryGroups) {
+                        try {
+                            const byte = parseInt(group, 2);
+                            if (!isNaN(byte)) {
+                                bytes.push(byte);
+                                
+                                // Generuj kolor dla tej grupy binarnej
+                                const color = getColorForBinaryPattern(group);
+                                groupsHtml += `<span class="highlighted" style="background-color: ${color}">${group}</span> `;
+                            } else {
+                                groupsHtml += group + ' ';
                             }
+                        } catch (e) {
+                            groupsHtml += group + ' ';
                         }
-                    } catch (e) {
-                        binaryHtml += part;
+                    }
+                    
+                    binaryHtml += groupsHtml.trim();
+                    
+                    // Dekoduj tekst i znajdź go w wyjściu
+                    if (bytes.length > 0) {
+                        try {
+                            const uint8Array = new Uint8Array(bytes);
+                            const decoder = new TextDecoder('utf-8');
+                            const decodedText = decoder.decode(uint8Array);
+                            
+                            // Sprawdź czy zdekodowany tekst występuje na bieżącej pozycji
+                            if (text.substr(textIndex, decodedText.length) === decodedText) {
+                                // Koloruj każdy znak zdekodowanego tekstu
+                                for (let i = 0; i < decodedText.length; i++) {
+                                    const charBytes = new TextEncoder().encode(decodedText[i]);
+                                    let byteIndex = 0;
+                                    
+                                    for (let j = 0; j < bytes.length; j++) {
+                                        if (bytes[j] === charBytes[0]) {
+                                            byteIndex = j;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // Użyj koloru odpowiadającej grupy binarnej
+                                    if (byteIndex < binaryGroups.length) {
+                                        const color = getColorForBinaryPattern(binaryGroups[byteIndex]);
+                                        textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(decodedText[i])}</span>`;
+                                    } else {
+                                        textHtml += escapeHtml(decodedText[i]);
+                                    }
+                                }
+                                
+                                textIndex += decodedText.length;
+                            }
+                        } catch (e) {
+                            console.warn("Error highlighting decoded text:", e);
+                        }
                     }
                 } else {
-                    // Jeśli to nie jest grupa binarna, zaznacz ją innym kolorem
-                    const color = '#f8f9fa'; // Jasny kolor dla niebinarnych części
-                    binaryHtml += `<span style="background-color: ${color}">${part}</span>`;
+                    // To zwykły tekst
+                    binaryHtml += part;
                     
-                    // Znajdź tę samą część w tekście wyjściowym
-                    if (currentTextIndex < currentTextLine.length && 
-                        currentTextLine.substr(currentTextIndex, part.length) === part) {
-                        textHtml += `<span style="background-color: ${color}">${escapeHtml(part)}</span>`;
-                        currentTextIndex += part.length;
+                    // Znajdź tę samą część w tekście
+                    if (textIndex < text.length && text.substr(textIndex, part.length) === part) {
+                        textHtml += escapeHtml(part);
+                        textIndex += part.length;
                     }
                 }
-            }
-            
-            // Dodaj pozostałą część tekstu dla bieżącej linii
-            if (currentTextIndex < currentTextLine.length) {
-                textHtml += escapeHtml(currentTextLine.substr(currentTextIndex));
-            }
-            
-            // Dodaj znak nowej linii, jeśli to nie jest ostatnia linia
-            if (lineIndex < binaryLines.length - 1) {
-                binaryHtml += '\n';
-                textHtml += '\n';
             }
         }
         
-        // Dodaj pozostałe linie tekstu, jeśli jest ich więcej niż linii binarnych
-        for (let i = binaryLines.length; i < textLines.length; i++) {
-            textHtml += escapeHtml(textLines[i]);
-            if (i < textLines.length - 1) {
-                textHtml += '\n';
-            }
+        // Dodaj pozostałą część tekstu
+        if (textIndex < text.length) {
+            textHtml += escapeHtml(text.substr(textIndex));
         }
         
         binaryHighlight.innerHTML = binaryHtml;
