@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Pomocnicza funkcja do dekodowania fragmentu binarnego
     function decodeBinaryFragment(fragment) {
-        // Znajdź wszystkie 8-bitowe grupy binarne
+        // Znajdź wszystkie 8-bitowe grupy binarne, ignorując spacje między nimi
         const binaryGroups = fragment.match(/[01]{8}/g) || [];
         
         if (binaryGroups.length === 0) {
