@@ -40,27 +40,44 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clean the input to remove non-binary characters
         const cleanedValue = this.value.replace(/[^01\s]/g, '');
         
-        // If we removed something, update the input field
-        if (cleanedValue !== this.value) {
-            this.value = cleanedValue;
-            
-            // Show a brief notification
-            statusMessage.textContent = 'Non-binary characters removed';
+        // Only process if we have binary content
+        if (cleanedValue.trim().length > 0) {
+            try {
+                // Process the binary content even if we had to clean it
+                binaryToText(cleanedValue);
+                updateHighlighting();
+                
+                // If we removed something, update the input field with a notification
+                if (cleanedValue !== this.value) {
+                    this.value = cleanedValue;
+                    
+                    // Show a brief notification
+                    statusMessage.textContent = 'Non-binary characters removed';
+                    statusMessage.className = 'status success';
+                    setTimeout(() => {
+                        statusMessage.textContent = '';
+                        statusMessage.className = 'status';
+                    }, 2000);
+                } else {
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status';
+                }
+            } catch (e) {
+                showError('Error decoding binary: ' + e.message);
+            }
+        } else if (this.value !== cleanedValue) {
+            // If the input contained only non-binary characters
+            this.value = '';
+            textOutput.value = '';
+            statusMessage.textContent = 'Non-binary content removed';
             statusMessage.className = 'status success';
             setTimeout(() => {
                 statusMessage.textContent = '';
                 statusMessage.className = 'status';
             }, 2000);
+            updateHighlighting();
         }
         
-        try {
-            binaryToText(cleanedValue);
-            updateHighlighting();
-            statusMessage.textContent = '';
-            statusMessage.className = 'status';
-        } catch (e) {
-            showError('Error decoding binary: ' + e.message);
-        }
         isProcessing = false;
     });
     
@@ -168,19 +185,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return '';
         }
         
+        // First, clean the input to ensure it only contains valid binary digits and spaces
+        const cleanedBinary = binary.replace(/[^01\s]/g, '');
+        
         // Process the binary input, allowing for spaces and line breaks
-        const binaryGroups = binary.split(/\s+/);
+        const binaryGroups = cleanedBinary.split(/\s+/).filter(group => group.length > 0);
         const bytes = [];
         
         for (let i = 0; i < binaryGroups.length; i++) {
             const group = binaryGroups[i];
             if (group.length > 0) {
+                // Skip invalid groups (should contain only 0s and 1s)
+                if (!/^[01]+$/.test(group)) {
+                    continue;
+                }
+                
                 // Convert binary to byte
                 const byte = parseInt(group, 2);
-                if (isNaN(byte)) {
-                    throw new Error('Invalid binary format');
+                if (!isNaN(byte)) {
+                    bytes.push(byte);
                 }
-                bytes.push(byte);
             }
         }
         
