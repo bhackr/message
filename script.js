@@ -145,8 +145,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function textToBinary(text) {
-        const binary = encodeToBinary(text);
-        binaryInput.value = binary;
+        const binaryValue = encodeToBinary(text);
+        binaryInput.value = binaryValue;
+        updateHighlighting();
     }
     
     function decodeBinary(binary) {
