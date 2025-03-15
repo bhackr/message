@@ -3,131 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>message.bhackr.com - Binary ↔ Text Converter</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .container {
-            background-color: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .input-group, .output-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        textarea {
-            width: 100%;
-            min-height: 150px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        textarea:focus {
-            border-color: #3498db;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-right: 10px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .message {
-            background-color: #e8f4f8;
-            padding: 15px;
-            border-radius: 4px;
-            border-left: 4px solid #3498db;
-            margin-bottom: 20px;
-        }
-        .direction-arrows {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            margin: 15px 0;
-            color: #3498db;
-        }
-        .status {
-            text-align: center;
-            padding: 10px;
-            margin-top: 15px;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            margin-right: 5px;
-            border-radius: 4px 4px 0 0;
-        }
-        .tab.active {
-            background-color: white;
-            border-bottom: 1px solid white;
-            margin-bottom: -1px;
-            font-weight: bold;
-            color: #3498db;
-        }
-    </style>
+    <title>Binary ↔ Text Converter with Color Matching</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <h1>Binary ↔ Text Converter</h1>
         
         <div class="message">
-            <p>This tool lets you convert between binary and text in real-time. Changes in either field will automatically update the other!</p>
+            <p>This tool lets you convert between binary and text in real-time. Changes in either field will automatically update the other with color matching between binary and text characters!</p>
         </div>
         
         <div class="tabs">
@@ -136,9 +20,20 @@
         </div>
         
         <div id="automaticMode">
+            <div class="switch-container">
+                <span>Color Highlighting:</span>
+                <label class="switch">
+                    <input type="checkbox" id="highlightToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             <div class="input-group">
                 <label for="binaryInput">Binary:</label>
-                <textarea id="binaryInput" placeholder="Enter binary code here (e.g., 01001000 01100101 01101100 01101100 01101111)">01000011 01111010 01100101 01110011 01100011 00100001 00100000 01110100 01101111 00100000 01100101 01111000 01110000 01100101 01110010 01111001 01101101 01100101 01101110 01110100 00101100 00100000 01101011 01100001 11000101 10111100 01100100 01100001 00100000 01101111 01110011 01101111 01100010 01100001 00101100 00100000 01101011 01110100 11000011 10110011 01110010 01100001 00100000 01100100 01101111 11000101 10000010 11000100 10000101 01100011 01111010 01111001 00101100 00100000 01110101 11000101 10000010 01100001 01110100 01110111 01101001 00100000 01101110 01100001 01101101 00100000 01111010 01110010 01101111 01111010 01110101 01101101 01101001 01100101 01101110 01101001 01100101 00100000 01110010 01101111 01111010 01110000 01110010 01111010 01100101 01110011 01110100 01110010 01111010 01100101 01101110 01101001 01100001 01101110 01101001 01100001 00100000 01110011 01101001 11000100 10011001 00100000 01111010 01100001 01110011 01111010 01111001 01100110 01110010 01101111 01110111 01100001 01101110 01111001 01100011 01101000 00100000 01110100 01110010 01100101 11000101 10011011 01100011 01101001 00101100 00100000 01101110 01100001 00100000 01101011 01110100 11000011 10110011 01110010 01111001 01100011 01101000 00100000 01101110 01101001 01100101 00100000 01110011 01110100 01101111 01101001 00100000 01101101 01101111 01100100 01100101 01110010 01100001 01100011 01101010 01100001 00100000 01100001 01101110 01101001 00100000 01111010 01110010 01101111 01111010 01110101 01101101 01101001 01100001 11000101 10000010 01100101 00100000 01100001 01101100 01100111 01101111 01110010 01111001 01110100 01101101 01111001 00101110 00100000 11110000 10011111 10010011 10000001 01000101 01100100 01111001 01100011 01101010 01100001 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 11000101 10011011 01100011 01101001 00111010 00100000 01101101 01100101 01110011 01110011 01100001 01100111 01100101 00101110 01100010 01101000 01100001 01100011 01101011 01110010 00101110 01100011 01101111 01101101 00100000 01101001 00100000 01110000 01101111 01100100 01111010 01101001 01100101 01101100 00100000 01110011 01101001 01100101 00100000 01110100 11000100 10000101 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 11000101 10011011 01100011 01101001 01100001 00100000 01111010 01100101 00100000 01111010 01101110 01100001 01101010 01101111 01101101 01111001 01101101 01101001 00101110 00001010</textarea>
+                <div id="binaryDisplayWrapper" class="display-wrapper">
+                    <textarea id="binaryInput" placeholder="Enter binary code here (e.g., 01001000 01100101 01101100 01101100 01101111)">01000011 01111010 01100101 01110011 01100011 00100001 00100000 01110100 01101111 00100000 01100101 01111000 01110000 01100101 01110010 01111001 01101101 01100101 01101110 01110100 00101100 00100000 01101011 01100001 11000101 10111100 01100100 01100001 00100000 01101111 01110011 01101111 01100010 01100001 00101100 00100000 01101011 01110100 11000011 10110011 01110010 01100001 00100000 01100100 01101111 11000101 10000010 11000100 10000101 01100011 01111010 01111001 00101100 00100000 01110101 11000101 10000010 01100001 01110100 01110111 01101001 00100000 01101110 01100001 01101101 00100000 01111010 01110010 01101111 01111010 01110101 01101101 01101001 01100101 01101110 01101001 01100101 00100000 01110010 01101111 01111010 01110000 01110010 01111010 01100101 01110011 01110100 01110010 01111010 01100101 01101110 01101001 01100001 01101110 01101001 01100001 00100000 01110011 01101001 11000100 10011001 00100000 01111010 01100001 01110011 01111010 01111001 01100110 01110010 01101111 01110111 01100001 01101110 01111001 01100011 01101000 00100000 01110100 01110010 01100101 11000101 10011011 01100011 01101001 00101100 00100000 01101110 01100001 00100000 01101011 01110100 11000011 10110011 01110010 01111001 01100011 01101000 00100000 01101110 01101001 01100101 00100000 01110011 01110100 01101111 01101001 00100000 01101101 01101111 01100100 01100101 01110010 01100001 01100011 01101010 01100001 00100000 01100001 01101110 01101001 00100000 01111010 01110010 01101111 01111010 01110101 01101101 01101001 01100001 11000101 10000010 01100101 00100000 01100001 01101100 01100111 01101111 01110010 01111001 01110100 01101101 01111001 00101110 00100000 11110000 10011111 10010011 10000001 01000101 01100100 01111001 01100011 01101010 01100001 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 11000101 10011011 01100011 01101001 00111010 00100000 01101101 01100101 01110011 01110011 01100001 01100111 01100101 00101110 01100010 01101000 01100001 01100011 01101011 01110010 00101110 01100011 01101111 01101101 00100000 01101001 00100000 01110000 01101111 01100100 01111010 01101001 01100101 01101100 00100000 01110011 01101001 01100101 00100000 01110100 11000100 10000101 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 11000101 10011011 01100011 01101001 01100001 00100000 01111010 01100101 00100000 01111010 01101110 01100001 01101010 01101111 01101101 01111001 01101101 01101001 00101110 00001010</textarea>
+                    <div id="binaryHighlight" class="highlight-overlay"></div>
+                </div>
             </div>
             
             <div class="direction-arrows">
@@ -147,7 +42,10 @@
             
             <div class="output-group">
                 <label for="textOutput">Text:</label>
-                <textarea id="textOutput" placeholder="Enter text here to convert to binary"></textarea>
+                <div id="textDisplayWrapper" class="display-wrapper">
+                    <textarea id="textOutput" placeholder="Enter text here to convert to binary"></textarea>
+                    <div id="textHighlight" class="highlight-overlay"></div>
+                </div>
             </div>
             
             <div id="statusMessage" class="status"></div>
@@ -172,172 +70,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto sync mode elements
-            const binaryInput = document.getElementById('binaryInput');
-            const textOutput = document.getElementById('textOutput');
-            const statusMessage = document.getElementById('statusMessage');
-            
-            // Manual mode elements
-            const binaryInputManual = document.getElementById('binaryInputManual');
-            const textOutputManual = document.getElementById('textOutputManual');
-            const decodeBinaryBtn = document.getElementById('decodeBinaryBtn');
-            const encodeTextBtn = document.getElementById('encodeTextBtn');
-            const clearBtn = document.getElementById('clearBtn');
-            
-            // Tab elements
-            const automaticTab = document.getElementById('automaticTab');
-            const manualTab = document.getElementById('manualTab');
-            const automaticMode = document.getElementById('automaticMode');
-            const manualMode = document.getElementById('manualMode');
-            
-            // Initialize with default values
-            binaryToText(binaryInput.value);
-            
-            // Set up event listeners for automatic sync
-            let isProcessing = false;
-            
-            binaryInput.addEventListener('input', function() {
-                if (isProcessing) return;
-                isProcessing = true;
-                try {
-                    binaryToText(this.value);
-                    statusMessage.textContent = '';
-                    statusMessage.className = 'status';
-                } catch (e) {
-                    showError('Error decoding binary: ' + e.message);
-                }
-                isProcessing = false;
-            });
-            
-            textOutput.addEventListener('input', function() {
-                if (isProcessing) return;
-                isProcessing = true;
-                try {
-                    textToBinary(this.value);
-                    statusMessage.textContent = '';
-                    statusMessage.className = 'status';
-                } catch (e) {
-                    showError('Error encoding text: ' + e.message);
-                }
-                isProcessing = false;
-            });
-            
-            // Set up event listeners for manual mode
-            decodeBinaryBtn.addEventListener('click', function() {
-                try {
-                    const binary = binaryInputManual.value.trim();
-                    const text = decodeBinary(binary);
-                    textOutputManual.value = text;
-                } catch (e) {
-                    textOutputManual.value = 'Error: ' + e.message;
-                }
-            });
-            
-            encodeTextBtn.addEventListener('click', function() {
-                try {
-                    const text = textOutputManual.value;
-                    const binary = encodeToBinary(text);
-                    binaryInputManual.value = binary;
-                } catch (e) {
-                    binaryInputManual.value = 'Error: ' + e.message;
-                }
-            });
-            
-            clearBtn.addEventListener('click', function() {
-                binaryInputManual.value = '';
-                textOutputManual.value = '';
-            });
-            
-            // Tab switching
-            automaticTab.addEventListener('click', function() {
-                automaticTab.classList.add('active');
-                manualTab.classList.remove('active');
-                automaticMode.style.display = 'block';
-                manualMode.style.display = 'none';
-                
-                // Copy values from manual to automatic mode
-                if (binaryInputManual.value) {
-                    binaryInput.value = binaryInputManual.value;
-                    binaryToText(binaryInputManual.value);
-                }
-            });
-            
-            manualTab.addEventListener('click', function() {
-                manualTab.classList.add('active');
-                automaticTab.classList.remove('active');
-                manualMode.style.display = 'block';
-                automaticMode.style.display = 'none';
-                
-                // Copy values from automatic to manual mode
-                binaryInputManual.value = binaryInput.value;
-                textOutputManual.value = textOutput.value;
-            });
-            
-            // Helper functions
-            function binaryToText(binary) {
-                const text = decodeBinary(binary);
-                textOutput.value = text;
-            }
-            
-            function textToBinary(text) {
-                const binary = encodeToBinary(text);
-                binaryInput.value = binary;
-            }
-            
-            function decodeBinary(binary) {
-                if (!binary.trim()) {
-                    return '';
-                }
-                
-                // Process the binary input, allowing for spaces and line breaks
-                const binaryGroups = binary.split(/\s+/);
-                const bytes = [];
-                
-                for (let i = 0; i < binaryGroups.length; i++) {
-                    const group = binaryGroups[i];
-                    if (group.length > 0) {
-                        // Convert binary to byte
-                        const byte = parseInt(group, 2);
-                        if (isNaN(byte)) {
-                            throw new Error('Invalid binary format');
-                        }
-                        bytes.push(byte);
-                    }
-                }
-                
-                // Convert bytes to a UTF-8 string
-                const uint8Array = new Uint8Array(bytes);
-                const decoder = new TextDecoder('utf-8');
-                return decoder.decode(uint8Array);
-            }
-            
-            function encodeToBinary(text) {
-                if (!text) {
-                    return '';
-                }
-                
-                const encoder = new TextEncoder();
-                const bytes = encoder.encode(text);
-                
-                // Convert each byte to binary representation
-                return Array.from(bytes)
-                    .map(byte => byte.toString(2).padStart(8, '0'))
-                    .join(' ');
-            }
-            
-            function showError(message) {
-                statusMessage.textContent = message;
-                statusMessage.className = 'status error';
-                
-                // Clear error after a few seconds
-                setTimeout(() => {
-                    statusMessage.textContent = '';
-                    statusMessage.className = 'status';
-                }, 5000);
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
