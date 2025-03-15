@@ -37,45 +37,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isProcessing) return;
         isProcessing = true;
         
-        // Clean the input to remove non-binary characters
-        const cleanedValue = this.value.replace(/[^01\s]/g, '');
-        
-        // Only process if we have binary content
-        if (cleanedValue.trim().length > 0) {
-            try {
-                // Process the binary content even if we had to clean it
-                binaryToText(cleanedValue);
-                updateHighlighting();
-                
-                // If we removed something, update the input field with a notification
-                if (cleanedValue !== this.value) {
-                    this.value = cleanedValue;
-                    
-                    // Show a brief notification
-                    statusMessage.textContent = 'Non-binary characters removed';
-                    statusMessage.className = 'status success';
-                    setTimeout(() => {
-                        statusMessage.textContent = '';
-                        statusMessage.className = 'status';
-                    }, 2000);
-                } else {
-                    statusMessage.textContent = '';
-                    statusMessage.className = 'status';
-                }
-            } catch (e) {
-                showError('Error decoding binary: ' + e.message);
-            }
-        } else if (this.value !== cleanedValue) {
-            // If the input contained only non-binary characters
-            this.value = '';
-            textOutput.value = '';
-            statusMessage.textContent = 'Non-binary content removed';
-            statusMessage.className = 'status success';
-            setTimeout(() => {
-                statusMessage.textContent = '';
-                statusMessage.className = 'status';
-            }, 2000);
+        try {
+            // Przetwórz treść binarną - bez usuwania znaków niebinarnych
+            binaryToText(this.value);
             updateHighlighting();
+            statusMessage.textContent = '';
+            statusMessage.className = 'status';
+        } catch (e) {
+            showError('Error processing input: ' + e.message);
         }
         
         isProcessing = false;
@@ -185,42 +154,40 @@ document.addEventListener('DOMContentLoaded', function() {
             return '';
         }
         
-        try {
-            // Czyść dane wejściowe, usuwając wszystkie znaki niebinarne
-            const cleanedBinary = binary.replace(/[^01\s]/g, '');
+        // Przygotuj wynikowy tekst
+        let resultText = '';
+        
+        // Podziel wejście na części na podstawie białych znaków
+        const parts = binary.split(/(\s+)/);
+        
+        for (let part of parts) {
+            // Jeśli część jest białym znakiem, zachowaj go
+            if (/^\s+$/.test(part)) {
+                resultText += part;
+                continue;
+            }
             
-            // Podziel na grupy bitów, ignorując puste grupy
-            const binaryGroups = cleanedBinary.split(/\s+/).filter(group => group.length > 0);
-            const bytes = [];
-            
-            for (let i = 0; i < binaryGroups.length; i++) {
-                const group = binaryGroups[i];
-                if (group.length > 0) {
-                    // Sprawdź, czy grupa zawiera tylko 0 i 1
-                    if (!/^[01]+$/.test(group)) {
-                        continue; // Pomiń nieprawidłowe grupy zamiast rzucać błąd
-                    }
-                    
-                    // Konwertuj grupę binarną na bajt
-                    const byte = parseInt(group, 2);
+            // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
+            if (/^[01]+$/.test(part)) {
+                try {
+                    // Konwertuj grupę binarną na znak
+                    const byte = parseInt(part, 2);
                     if (!isNaN(byte)) {
-                        bytes.push(byte);
+                        const uint8Array = new Uint8Array([byte]);
+                        const decoder = new TextDecoder('utf-8');
+                        resultText += decoder.decode(uint8Array);
                     }
+                } catch (e) {
+                    // W przypadku błędu, po prostu zachowaj oryginalną część
+                    resultText += part;
                 }
+            } else {
+                // Jeśli to nie jest grupa binarna, zachowaj oryginalny tekst
+                resultText += part;
             }
-            
-            if (bytes.length === 0) {
-                return ''; // Jeśli nie było poprawnych bajtów, zwróć pusty string
-            }
-            
-            // Konwertuj bajty na tekst UTF-8
-            const uint8Array = new Uint8Array(bytes);
-            const decoder = new TextDecoder('utf-8');
-            return decoder.decode(uint8Array);
-        } catch (e) {
-            console.warn("Error during binary decoding:", e);
-            return ''; // W przypadku błędu, zwróć pusty string zamiast rzucać wyjątek
         }
+        
+        return resultText;
     }
     
     function encodeToBinary(text) {
@@ -279,102 +246,63 @@ document.addEventListener('DOMContentLoaded', function() {
         const binary = binaryInput.value;
         const text = textOutput.value;
         
-        // Process binary highlighting
-        const binaryGroups = binary.split(/\s+/).filter(group => group.length > 0);
+        // Podziel wejście binarne na części
+        const parts = binary.split(/(\s+)/);
         let binaryHtml = '';
+        let textHtml = '';
+        let textIndex = 0;
         
-        try {
-            // Create a direct mapping between binary patterns and their positions in text
-            const binaryBytes = [];
-            
-            // Convert binary groups to bytes
-            for (let i = 0; i < binaryGroups.length; i++) {
-                const byte = parseInt(binaryGroups[i], 2);
-                if (!isNaN(byte)) {
-                    binaryBytes.push(byte);
-                }
+        // Iteruj przez każdą część
+        for (let part of parts) {
+            // Jeśli część jest białym znakiem, zachowaj go
+            if (/^\s+$/.test(part)) {
+                binaryHtml += part;
+                continue;
             }
             
-            // Re-encode to get the exact characters
-            const uint8Array = new Uint8Array(binaryBytes);
-            const decodedText = new TextDecoder('utf-8').decode(uint8Array);
-            
-            // Map each binary group to its position in the decoded text
-            let currentCharIndex = 0;
-            let currentBinaryIndex = 0;
-            const charToGroupIndices = new Map(); // Maps character index to array of binary group indices
-            
-            while (currentBinaryIndex < binaryGroups.length) {
-                if (currentCharIndex >= decodedText.length) break;
-                
-                const char = decodedText[currentCharIndex];
-                const charBytes = new TextEncoder().encode(char);
-                
-                // Each character maps to a specific number of binary groups
-                const groupIndices = [];
-                for (let i = 0; i < charBytes.length && currentBinaryIndex < binaryGroups.length; i++) {
-                    groupIndices.push(currentBinaryIndex);
-                    currentBinaryIndex++;
-                }
-                
-                charToGroupIndices.set(currentCharIndex, groupIndices);
-                currentCharIndex++;
-            }
-            
-            // Generate colors for each character
-            const charColors = new Map(); // Maps character index to color
-            
-            for (let i = 0; i < decodedText.length; i++) {
-                const groupIndices = charToGroupIndices.get(i);
-                if (groupIndices && groupIndices.length > 0) {
-                    // Generate a color based on the first binary group for this character
-                    const color = getColorForBinaryPattern(binaryGroups[groupIndices[0]]);
-                    charColors.set(i, color);
-                }
-            }
-            
-            // Generate HTML for binary groups
-            let binaryHtmlParts = [];
-            for (let i = 0; i < binaryGroups.length; i++) {
-                // Find which character this binary group belongs to
-                let foundCharIndex = -1;
-                for (const [charIndex, groupIndices] of charToGroupIndices.entries()) {
-                    if (groupIndices.includes(i)) {
-                        foundCharIndex = charIndex;
-                        break;
+            // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
+            if (/^[01]+$/.test(part)) {
+                try {
+                    // Generuj kolor dla tej części binarnej
+                    const color = getColorForBinaryPattern(part);
+                    binaryHtml += `<span class="highlighted" style="background-color: ${color}">${part}</span>`;
+                    
+                    // Konwertuj na znak, aby znaleźć odpowiadający tekst
+                    const byte = parseInt(part, 2);
+                    if (!isNaN(byte)) {
+                        const uint8Array = new Uint8Array([byte]);
+                        const decoder = new TextDecoder('utf-8');
+                        const decodedChar = decoder.decode(uint8Array);
+                        
+                        // Znajdź ten znak w wyjściowym tekście jeśli możliwe
+                        if (textIndex < text.length && text[textIndex] === decodedChar) {
+                            textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(decodedChar)}</span>`;
+                            textIndex++;
+                        }
                     }
+                } catch (e) {
+                    binaryHtml += part;
                 }
+            } else {
+                // Jeśli to nie jest grupa binarna, zaznacz ją innym kolorem
+                const color = '#f8f9fa'; // Jasny kolor dla niebinarnych części
+                binaryHtml += `<span style="background-color: ${color}">${part}</span>`;
                 
-                if (foundCharIndex !== -1 && charColors.has(foundCharIndex)) {
-                    const color = charColors.get(foundCharIndex);
-                    binaryHtmlParts.push(`<span class="highlighted" style="background-color: ${color}">${binaryGroups[i]}</span>`);
-                } else {
-                    binaryHtmlParts.push(binaryGroups[i]);
+                // Znajdź tę samą część w tekście wyjściowym
+                if (textIndex < text.length && text.substr(textIndex, part.length) === part) {
+                    textHtml += `<span style="background-color: ${color}">${escapeHtml(part)}</span>`;
+                    textIndex += part.length;
                 }
             }
-            
-            // Join with spaces to reconstruct the binary string with highlighting
-            binaryHtml = binaryHtmlParts.join(' ');
-            
-            // Generate HTML for text characters
-            let textHtml = '';
-            for (let i = 0; i < decodedText.length; i++) {
-                if (charColors.has(i)) {
-                    const color = charColors.get(i);
-                    textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(decodedText[i])}</span>`;
-                } else {
-                    textHtml += escapeHtml(decodedText[i]);
-                }
-            }
-            
-            binaryHighlight.innerHTML = binaryHtml;
-            textHighlight.innerHTML = textHtml;
-            
-        } catch (error) {
-            console.error("Error updating highlighting:", error);
-            binaryHighlight.innerHTML = binary.replace(/\s/g, ' ');
-            textHighlight.innerHTML = escapeHtml(text);
         }
+        
+        // Dodaj pozostałą część tekstu wyjściowego
+        if (textIndex < text.length) {
+            textHtml += escapeHtml(text.substr(textIndex));
+        }
+        
+        binaryHighlight.innerHTML = binaryHtml;
+        textHighlight.innerHTML = textHtml;
     }
     
     function escapeHtml(text) {
