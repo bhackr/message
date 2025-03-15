@@ -158,69 +158,91 @@ document.addEventListener('DOMContentLoaded', function() {
         // Przygotuj wynikowy tekst
         let resultText = '';
         
-        // Podziel wejście na linie
-        const lines = binary.split(/\r?\n/);
+        // Podziel wejście na linie, zachowując znaki nowej linii
+        const lines = binary.split(/(\r?\n)/);
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            const trimmedLine = line.trim();
             
-            // Podziel linię na słowa i białe znaki
-            const parts = line.split(/(\s+)|(\#[^\s]+)/g).filter(Boolean);
-            
-            for (let part of parts) {
-                // Sprawdź, czy część jest hashtagiem (zaczyna się od #)
-                if (part.startsWith('#')) {
-                    // Zachowaj hashtag bez zmian
-                    resultText += part;
-                } else if (/^\s+$/.test(part)) {
-                    // Jeśli to biały znak, zachowaj go
-                    resultText += part;
-                } else {
-                    // Sprawdź czy to kod binarny
-                    const binaryGroups = part.match(/[01]{8}/g) || [];
-                    
-                    if (binaryGroups.length > 0) {
-                        // To jest kod binarny, dekoduj go
-                        const bytes = [];
-                        for (let group of binaryGroups) {
-                            try {
-                                const byte = parseInt(group, 2);
-                                if (!isNaN(byte)) {
-                                    bytes.push(byte);
-                                }
-                            } catch (e) {
-                                console.warn("Error parsing binary group:", group, e);
-                            }
-                        }
-                        
-                        // Dekoduj wszystkie bajty na raz
-                        if (bytes.length > 0) {
-                            try {
-                                const uint8Array = new Uint8Array(bytes);
-                                const decoder = new TextDecoder('utf-8');
-                                resultText += decoder.decode(uint8Array);
-                            } catch (e) {
-                                console.warn("Error decoding bytes:", e);
-                                resultText += part;
-                            }
-                        } else {
-                            resultText += part;
-                        }
-                    } else {
-                        // To nie jest kod binarny, zachowaj bez zmian
-                        resultText += part;
-                    }
-                }
+            // Jeśli to znak nowej linii, zachowaj go
+            if (/\r?\n/.test(line)) {
+                resultText += line;
+                continue;
             }
             
-            // Dodaj znak nowej linii po każdej linii (oprócz ostatniej)
-            if (i < lines.length - 1) {
-                resultText += '\n';
+            // Zidentyfikuj hashtagi i fragmenty binarne
+            let processedLine = '';
+            let currentPosition = 0;
+            
+            // Znajdź wszystkie hashtagi
+            const hashtagMatches = [...line.matchAll(/#[^\s]+/g)];
+            
+            if (hashtagMatches.length > 0) {
+                // Jeśli linia zawiera hashtagi, przetwórz segmenty między nimi
+                for (const match of hashtagMatches) {
+                    const hashtagIndex = match.index;
+                    const hashtag = match[0];
+                    
+                    // Przetwórz tekst przed hashtagiem
+                    if (hashtagIndex > currentPosition) {
+                        const beforeHashtag = line.substring(currentPosition, hashtagIndex);
+                        processedLine += decodeBinaryFragment(beforeHashtag);
+                    }
+                    
+                    // Dodaj hashtag bez zmian
+                    processedLine += hashtag;
+                    currentPosition = hashtagIndex + hashtag.length;
+                }
+                
+                // Przetwórz resztę linii po ostatnim hashtagu
+                if (currentPosition < line.length) {
+                    const afterLastHashtag = line.substring(currentPosition);
+                    processedLine += decodeBinaryFragment(afterLastHashtag);
+                }
+                
+                resultText += processedLine;
+            } else {
+                // Jeśli nie ma hashtagów, przetwórz całą linię
+                resultText += decodeBinaryFragment(line);
             }
         }
         
         return resultText;
+    }
+    
+    // Pomocnicza funkcja do dekodowania fragmentu binarnego
+    function decodeBinaryFragment(fragment) {
+        // Znajdź wszystkie 8-bitowe grupy binarne
+        const binaryGroups = fragment.match(/[01]{8}/g) || [];
+        
+        if (binaryGroups.length === 0) {
+            // Jeśli nie ma grup binarnych, zwróć oryginalny tekst
+            return fragment;
+        }
+        
+        // Konwertuj grupy na bajty
+        const bytes = [];
+        for (const group of binaryGroups) {
+            const byte = parseInt(group, 2);
+            if (!isNaN(byte)) {
+                bytes.push(byte);
+            }
+        }
+        
+        // Jeśli nie ma poprawnych bajtów, zwróć oryginalny tekst
+        if (bytes.length === 0) {
+            return fragment;
+        }
+        
+        // Dekoduj bajty na tekst UTF-8
+        try {
+            const uint8Array = new Uint8Array(bytes);
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(uint8Array);
+        } catch (e) {
+            console.warn("Error decoding binary:", e);
+            return fragment;
+        }
     }
     
     function encodeToBinary(text) {
@@ -230,30 +252,72 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let result = '';
         
-        // Podziel tekst na słowa, hashtagi i białe znaki
-        const parts = text.split(/(\s+)|(\#[^\s]+)/g).filter(Boolean);
+        // Podziel tekst na linie, zachowując znaki nowej linii
+        const lines = text.split(/(\r?\n)/);
         
-        for (let part of parts) {
-            // Sprawdź, czy część jest hashtagiem (zaczyna się od #)
-            if (part.startsWith('#')) {
-                // Zachowaj hashtag bez zmian
-                result += part;
-            } else if (/^\s+$/.test(part)) {
-                // Jeśli to biały znak, zachowaj go
-                result += part;
-            } else {
-                // Enkoduj normalny tekst do binarnego
-                const encoder = new TextEncoder();
-                const bytes = encoder.encode(part);
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Jeśli to znak nowej linii, zachowaj go
+            if (/\r?\n/.test(line)) {
+                result += line;
+                continue;
+            }
+            
+            // Zidentyfikuj hashtagi i fragmenty tekstu
+            let processedLine = '';
+            let currentPosition = 0;
+            
+            // Znajdź wszystkie hashtagi
+            const hashtagMatches = [...line.matchAll(/#[^\s]+/g)];
+            
+            if (hashtagMatches.length > 0) {
+                // Jeśli linia zawiera hashtagi, przetwórz segmenty między nimi
+                for (const match of hashtagMatches) {
+                    const hashtagIndex = match.index;
+                    const hashtag = match[0];
+                    
+                    // Przetwórz tekst przed hashtagiem
+                    if (hashtagIndex > currentPosition) {
+                        const beforeHashtag = line.substring(currentPosition, hashtagIndex);
+                        processedLine += encodeToBinaryFragment(beforeHashtag);
+                    }
+                    
+                    // Dodaj hashtag bez zmian
+                    processedLine += hashtag;
+                    currentPosition = hashtagIndex + hashtag.length;
+                }
                 
-                // Konwertuj każdy bajt na reprezentację binarną i połącz spacjami
-                result += Array.from(bytes)
-                    .map(byte => byte.toString(2).padStart(8, '0'))
-                    .join(' ');
+                // Przetwórz resztę linii po ostatnim hashtagu
+                if (currentPosition < line.length) {
+                    const afterLastHashtag = line.substring(currentPosition);
+                    processedLine += encodeToBinaryFragment(afterLastHashtag);
+                }
+                
+                result += processedLine;
+            } else {
+                // Jeśli nie ma hashtagów, przetwórz całą linię
+                result += encodeToBinaryFragment(line);
             }
         }
         
         return result;
+    }
+    
+    // Pomocnicza funkcja do kodowania fragmentu tekstowego na binarny
+    function encodeToBinaryFragment(fragment) {
+        if (!fragment || fragment.trim() === '') {
+            return fragment;
+        }
+        
+        // Enkoduj fragment tekstu na UTF-8
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(fragment);
+        
+        // Konwertuj każdy bajt na reprezentację binarną
+        return Array.from(bytes)
+            .map(byte => byte.toString(2).padStart(8, '0'))
+            .join(' ');
     }
     
     // Generate a diverse color palette with good contrast
