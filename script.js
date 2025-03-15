@@ -36,8 +36,25 @@ document.addEventListener('DOMContentLoaded', function() {
     binaryInput.addEventListener('input', function() {
         if (isProcessing) return;
         isProcessing = true;
+        
+        // Clean the input to remove non-binary characters
+        const cleanedValue = this.value.replace(/[^01\s]/g, '');
+        
+        // If we removed something, update the input field
+        if (cleanedValue !== this.value) {
+            this.value = cleanedValue;
+            
+            // Show a brief notification
+            statusMessage.textContent = 'Non-binary characters removed';
+            statusMessage.className = 'status success';
+            setTimeout(() => {
+                statusMessage.textContent = '';
+                statusMessage.className = 'status';
+            }, 2000);
+        }
+        
         try {
-            binaryToText(this.value);
+            binaryToText(cleanedValue);
             updateHighlighting();
             statusMessage.textContent = '';
             statusMessage.className = 'status';
@@ -230,103 +247,90 @@ document.addEventListener('DOMContentLoaded', function() {
         const text = textOutput.value;
         
         // Process binary highlighting
-        const binaryGroups = binary.split(/\s+/);
+        const binaryGroups = binary.split(/\s+/).filter(group => group.length > 0);
         let binaryHtml = '';
         
-        // Create a mapping between binary groups and text characters
-        const binaryToCharMap = new Map();
-        const charPositions = [];
-        
         try {
-            // First pass: determine which binary groups correspond to which text characters
-            let charIndex = 0;
+            // Create a direct mapping between binary patterns and their positions in text
+            const binaryBytes = [];
+            
+            // Convert binary groups to bytes
             for (let i = 0; i < binaryGroups.length; i++) {
-                const group = binaryGroups[i];
-                if (group.length > 0) {
-                    const byte = parseInt(group, 2);
-                    if (!isNaN(byte)) {
-                        if (!binaryToCharMap.has(i)) {
-                            binaryToCharMap.set(i, charIndex);
-                            
-                            // Store positions for multi-byte characters
-                            if (!charPositions[charIndex]) {
-                                charPositions[charIndex] = [];
-                            }
-                            charPositions[charIndex].push(i);
-                            
-                            // Check if this starts a multi-byte UTF-8 sequence
-                            if (byte >= 0xC0 && byte < 0xF8) {
-                                // This is the start of a multi-byte character
-                                // Determine how many bytes follow based on the first byte
-                                let followBytes = 0;
-                                if (byte >= 0xC0 && byte < 0xE0) followBytes = 1;      // 2-byte sequence
-                                else if (byte >= 0xE0 && byte < 0xF0) followBytes = 2;  // 3-byte sequence
-                                else if (byte >= 0xF0 && byte < 0xF8) followBytes = 3;  // 4-byte sequence
-                                
-                                // Mark the following bytes as part of this character
-                                for (let j = 1; j <= followBytes && i + j < binaryGroups.length; j++) {
-                                    binaryToCharMap.set(i + j, charIndex);
-                                    charPositions[charIndex].push(i + j);
-                                }
-                                
-                                // Skip the bytes we just processed
-                                i += followBytes;
-                            }
-                            
-                            charIndex++;
-                        }
-                    }
+                const byte = parseInt(binaryGroups[i], 2);
+                if (!isNaN(byte)) {
+                    binaryBytes.push(byte);
                 }
             }
             
-            // Second pass: generate HTML with colors
+            // Re-encode to get the exact characters
+            const uint8Array = new Uint8Array(binaryBytes);
+            const decodedText = new TextDecoder('utf-8').decode(uint8Array);
+            
+            // Map each binary group to its position in the decoded text
+            let currentCharIndex = 0;
+            let currentBinaryIndex = 0;
+            const charToGroupIndices = new Map(); // Maps character index to array of binary group indices
+            
+            while (currentBinaryIndex < binaryGroups.length) {
+                if (currentCharIndex >= decodedText.length) break;
+                
+                const char = decodedText[currentCharIndex];
+                const charBytes = new TextEncoder().encode(char);
+                
+                // Each character maps to a specific number of binary groups
+                const groupIndices = [];
+                for (let i = 0; i < charBytes.length && currentBinaryIndex < binaryGroups.length; i++) {
+                    groupIndices.push(currentBinaryIndex);
+                    currentBinaryIndex++;
+                }
+                
+                charToGroupIndices.set(currentCharIndex, groupIndices);
+                currentCharIndex++;
+            }
+            
+            // Generate colors for each character
+            const charColors = new Map(); // Maps character index to color
+            
+            for (let i = 0; i < decodedText.length; i++) {
+                const groupIndices = charToGroupIndices.get(i);
+                if (groupIndices && groupIndices.length > 0) {
+                    // Generate a color based on the first binary group for this character
+                    const color = getColorForBinaryPattern(binaryGroups[groupIndices[0]]);
+                    charColors.set(i, color);
+                }
+            }
+            
+            // Generate HTML for binary groups
+            let binaryHtmlParts = [];
             for (let i = 0; i < binaryGroups.length; i++) {
-                const group = binaryGroups[i];
-                if (group.length > 0) {
-                    try {
-                        // Find all groups that belong to the same character
-                        const charIdx = binaryToCharMap.get(i);
-                        if (charIdx !== undefined) {
-                            const allGroups = charPositions[charIdx];
-                            
-                            // Generate a consistent color for this character
-                            let color;
-                            if (allGroups && allGroups.length > 1) {
-                                // For multi-byte characters, use the first byte's color
-                                const firstGroup = binaryGroups[allGroups[0]];
-                                color = getColorForBinaryPattern(firstGroup);
-                            } else {
-                                color = getColorForBinaryPattern(group);
-                            }
-                            
-                            binaryHtml += `<span class="highlighted" style="background-color: ${color}">${group}</span> `;
-                        } else {
-                            binaryHtml += group + ' ';
-                        }
-                    } catch (e) {
-                        binaryHtml += group + ' ';
+                // Find which character this binary group belongs to
+                let foundCharIndex = -1;
+                for (const [charIndex, groupIndices] of charToGroupIndices.entries()) {
+                    if (groupIndices.includes(i)) {
+                        foundCharIndex = charIndex;
+                        break;
                     }
+                }
+                
+                if (foundCharIndex !== -1 && charColors.has(foundCharIndex)) {
+                    const color = charColors.get(foundCharIndex);
+                    binaryHtmlParts.push(`<span class="highlighted" style="background-color: ${color}">${binaryGroups[i]}</span>`);
                 } else {
-                    binaryHtml += ' ';
+                    binaryHtmlParts.push(binaryGroups[i]);
                 }
             }
             
-            // Process text highlighting
+            // Join with spaces to reconstruct the binary string with highlighting
+            binaryHtml = binaryHtmlParts.join(' ');
+            
+            // Generate HTML for text characters
             let textHtml = '';
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                
-                // Find the binary groups for this character
-                const groups = charPositions[i];
-                
-                if (groups && groups.length > 0) {
-                    // Use the color of the first binary group for this character
-                    const firstGroup = binaryGroups[groups[0]];
-                    const color = getColorForBinaryPattern(firstGroup);
-                    
-                    textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(char)}</span>`;
+            for (let i = 0; i < decodedText.length; i++) {
+                if (charColors.has(i)) {
+                    const color = charColors.get(i);
+                    textHtml += `<span class="highlighted" style="background-color: ${color}">${escapeHtml(decodedText[i])}</span>`;
                 } else {
-                    textHtml += escapeHtml(char);
+                    textHtml += escapeHtml(decodedText[i]);
                 }
             }
             
