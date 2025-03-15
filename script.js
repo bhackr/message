@@ -160,46 +160,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Podziel wejście na linie
         const lines = binary.split(/\r?\n/);
         
-        for (let line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
             // Sprawdź, czy linia zaczyna się od #
             if (line.trim().startsWith('#')) {
                 // Jeśli tak, zachowaj ją bez zmian
-                resultText += line + '\n';
-                continue;
-            }
-            
-            // Podziel linię na części na podstawie białych znaków
-            const parts = line.split(/(\s+)/);
-            
-            for (let part of parts) {
-                // Jeśli część jest białym znakiem, zachowaj go
-                if (/^\s+$/.test(part)) {
-                    resultText += part;
-                    continue;
-                }
+                resultText += line;
+            } else {
+                // Podziel linię na części na podstawie białych znaków
+                const parts = line.split(/(\s+)/);
                 
-                // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
-                if (/^[01]+$/.test(part)) {
-                    try {
-                        // Konwertuj grupę binarną na znak
-                        const byte = parseInt(part, 2);
-                        if (!isNaN(byte)) {
-                            const uint8Array = new Uint8Array([byte]);
-                            const decoder = new TextDecoder('utf-8');
-                            resultText += decoder.decode(uint8Array);
+                for (let part of parts) {
+                    // Jeśli część jest białym znakiem, zachowaj go
+                    if (/^\s+$/.test(part)) {
+                        resultText += part;
+                        continue;
+                    }
+                    
+                    // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
+                    if (/^[01]+$/.test(part)) {
+                        try {
+                            // Konwertuj grupę binarną na znak
+                            const byte = parseInt(part, 2);
+                            if (!isNaN(byte)) {
+                                const uint8Array = new Uint8Array([byte]);
+                                const decoder = new TextDecoder('utf-8');
+                                resultText += decoder.decode(uint8Array);
+                            }
+                        } catch (e) {
+                            // W przypadku błędu, po prostu zachowaj oryginalną część
+                            resultText += part;
                         }
-                    } catch (e) {
-                        // W przypadku błędu, po prostu zachowaj oryginalną część
+                    } else {
+                        // Jeśli to nie jest grupa binarna, zachowaj oryginalny tekst
                         resultText += part;
                     }
-                } else {
-                    // Jeśli to nie jest grupa binarna, zachowaj oryginalny tekst
-                    resultText += part;
                 }
             }
             
             // Dodaj znak nowej linii na końcu każdej linii (oprócz ostatniej)
-            if (line !== lines[lines.length - 1]) {
+            if (i < lines.length - 1) {
                 resultText += '\n';
             }
         }
