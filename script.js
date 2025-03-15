@@ -1,44 +1,4 @@
-// Tab switching
-automaticTab.addEventListener('click', function () {
-    automaticTab.classList.add('active');
-    manualTab.classList.remove('active');
-    graphTab.classList.remove('active');
-    automaticMode.style.display = 'block';
-    manualMode.style.display = 'none';
-    graphMode.style.display = 'none';
 
-    // Copy values from manual to automatic mode
-    if (binaryInputManual.value) {
-        binaryInput.value = binaryInputManual.value;
-        binaryToText(binaryInputManual.value);
-        updateHighlighting();
-    }
-});
-
-manualTab.addEventListener('click', function () {
-    manualTab.classList.add('active');
-    automaticTab.classList.remove('active');
-    graphTab.classList.remove('active');
-    manualMode.style.display = 'block';
-    automaticMode.style.display = 'none';
-    graphMode.style.display = 'none';
-
-    // Copy values from automatic to manual mode
-    binaryInputManual.value = binaryInput.value;
-    textOutputManual.value = textOutput.value;
-});
-
-graphTab.addEventListener('click', function () {
-    graphTab.classList.add('active');
-    automaticTab.classList.remove('active');
-    manualTab.classList.remove('active');
-    graphMode.style.display = 'block';
-    automaticMode.style.display = 'none';
-    manualMode.style.display = 'none';
-
-    // Initialize the graph
-    initializeGraph();
-});
 
 document.addEventListener('DOMContentLoaded', function () {
     // Auto sync mode elements
@@ -67,6 +27,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Character to color mapping
     const binaryColorMap = new Map();
+
+
+        // Tab switching
+    automaticTab.addEventListener('click', function () {
+        automaticTab.classList.add('active');
+        manualTab.classList.remove('active');
+        graphTab.classList.remove('active');
+        automaticMode.style.display = 'block';
+        manualMode.style.display = 'none';
+        graphMode.style.display = 'none';
+
+        // Copy values from manual to automatic mode
+        if (binaryInputManual.value) {
+            binaryInput.value = binaryInputManual.value;
+            binaryToText(binaryInputManual.value);
+            updateHighlighting();
+        }
+    });
+
+    manualTab.addEventListener('click', function () {
+        manualTab.classList.add('active');
+        automaticTab.classList.remove('active');
+        graphTab.classList.remove('active');
+        manualMode.style.display = 'block';
+        automaticMode.style.display = 'none';
+        graphMode.style.display = 'none';
+
+        // Copy values from automatic to manual mode
+        binaryInputManual.value = binaryInput.value;
+        textOutputManual.value = textOutput.value;
+    });
+
+    graphTab.addEventListener('click', function () {
+        graphTab.classList.add('active');
+        automaticTab.classList.remove('active');
+        manualTab.classList.remove('active');
+        graphMode.style.display = 'block';
+        automaticMode.style.display = 'none';
+        manualMode.style.display = 'none';
+
+        // Initialize the graph
+        initializeGraph();
+    });
+
 
     // Initialize with default values
     binaryToText(binaryInput.value);
