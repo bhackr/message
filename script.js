@@ -181,37 +181,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function decodeBinary(binary) {
-        if (!binary.trim()) {
+        if (!binary || !binary.trim()) {
             return '';
         }
         
-        // First, clean the input to ensure it only contains valid binary digits and spaces
-        const cleanedBinary = binary.replace(/[^01\s]/g, '');
-        
-        // Process the binary input, allowing for spaces and line breaks
-        const binaryGroups = cleanedBinary.split(/\s+/).filter(group => group.length > 0);
-        const bytes = [];
-        
-        for (let i = 0; i < binaryGroups.length; i++) {
-            const group = binaryGroups[i];
-            if (group.length > 0) {
-                // Skip invalid groups (should contain only 0s and 1s)
-                if (!/^[01]+$/.test(group)) {
-                    continue;
-                }
-                
-                // Convert binary to byte
-                const byte = parseInt(group, 2);
-                if (!isNaN(byte)) {
-                    bytes.push(byte);
+        try {
+            // Czyść dane wejściowe, usuwając wszystkie znaki niebinarne
+            const cleanedBinary = binary.replace(/[^01\s]/g, '');
+            
+            // Podziel na grupy bitów, ignorując puste grupy
+            const binaryGroups = cleanedBinary.split(/\s+/).filter(group => group.length > 0);
+            const bytes = [];
+            
+            for (let i = 0; i < binaryGroups.length; i++) {
+                const group = binaryGroups[i];
+                if (group.length > 0) {
+                    // Sprawdź, czy grupa zawiera tylko 0 i 1
+                    if (!/^[01]+$/.test(group)) {
+                        continue; // Pomiń nieprawidłowe grupy zamiast rzucać błąd
+                    }
+                    
+                    // Konwertuj grupę binarną na bajt
+                    const byte = parseInt(group, 2);
+                    if (!isNaN(byte)) {
+                        bytes.push(byte);
+                    }
                 }
             }
+            
+            if (bytes.length === 0) {
+                return ''; // Jeśli nie było poprawnych bajtów, zwróć pusty string
+            }
+            
+            // Konwertuj bajty na tekst UTF-8
+            const uint8Array = new Uint8Array(bytes);
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(uint8Array);
+        } catch (e) {
+            console.warn("Error during binary decoding:", e);
+            return ''; // W przypadku błędu, zwróć pusty string zamiast rzucać wyjątek
         }
-        
-        // Convert bytes to a UTF-8 string
-        const uint8Array = new Uint8Array(bytes);
-        const decoder = new TextDecoder('utf-8');
-        return decoder.decode(uint8Array);
     }
     
     function encodeToBinary(text) {
