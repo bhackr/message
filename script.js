@@ -169,34 +169,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Jeśli tak, zachowaj ją bez zmian
                 resultText += line;
             } else {
-                // Podziel linię na części na podstawie białych znaków
-                const parts = line.split(/(\s+)/);
+                // Zbierz wszystkie grupy binarne z linii
+                const binaryGroups = line.match(/[01]{8}/g) || [];
+                const bytes = [];
                 
-                for (let part of parts) {
-                    // Jeśli część jest białym znakiem, zachowaj go
-                    if (/^\s+$/.test(part)) {
-                        resultText += part;
-                        continue;
-                    }
-                    
-                    // Sprawdź, czy to jest grupa binarna (zawiera tylko 0 i 1)
-                    if (/^[01]+$/.test(part)) {
-                        try {
-                            // Konwertuj grupę binarną na znak
-                            const byte = parseInt(part, 2);
-                            if (!isNaN(byte)) {
-                                const uint8Array = new Uint8Array([byte]);
-                                const decoder = new TextDecoder('utf-8');
-                                resultText += decoder.decode(uint8Array);
-                            }
-                        } catch (e) {
-                            // W przypadku błędu, po prostu zachowaj oryginalną część
-                            resultText += part;
+                for (let group of binaryGroups) {
+                    try {
+                        // Konwertuj grupę binarną na bajt
+                        const byte = parseInt(group, 2);
+                        if (!isNaN(byte)) {
+                            bytes.push(byte);
                         }
-                    } else {
-                        // Jeśli to nie jest grupa binarna, zachowaj oryginalny tekst
-                        resultText += part;
+                    } catch (e) {
+                        console.warn("Error parsing binary group:", group, e);
                     }
+                }
+                
+                // Konwertuj wszystkie bajty na raz do tekstu UTF-8
+                if (bytes.length > 0) {
+                    try {
+                        const uint8Array = new Uint8Array(bytes);
+                        const decoder = new TextDecoder('utf-8');
+                        resultText += decoder.decode(uint8Array);
+                    } catch (e) {
+                        console.warn("Error decoding bytes:", e);
+                        // W przypadku błędu, dodaj oryginalne grupy
+                        resultText += binaryGroups.join(' ');
+                    }
+                } else {
+                    // Jeśli nie ma poprawnych grup binarnych, zachowaj oryginalną linię
+                    resultText += line;
                 }
             }
             
@@ -227,11 +229,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Jeśli tak, zachowaj ją bez zmian
                 result += line;
             } else {
-                // Enkoduj każdy znak z linii na binarny
+                // Enkoduj całą linię jako jeden blok UTF-8
                 const encoder = new TextEncoder();
                 const bytes = encoder.encode(line);
                 
-                // Konwertuj każdy bajt na reprezentację binarną
+                // Konwertuj każdy bajt na reprezentację binarną i połącz spacjami
                 result += Array.from(bytes)
                     .map(byte => byte.toString(2).padStart(8, '0'))
                     .join(' ');
