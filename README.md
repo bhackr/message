@@ -5,14 +5,14 @@
 
 A powerful, interactive tool for converting between binary code and text with real-time color highlighting.
 
-![Binary Text Converter Screenshot](https://via.placeholder.com/800x450)
-
 
 ## Features
 
 - **Real-time Bidirectional Conversion**: Convert from binary to text or text to binary instantly.
 - **Color Highlighting**: Each binary sequence is color-coded with its corresponding text character, making it easy to see the relationships.
 - **UTF-8 Support**: Properly handles all UTF-8 characters, including multi-byte sequences like emoji.
+- **Hashtag Preservation**: Lines starting with `#` are preserved as-is and not encoded/decoded in both directions.
+- **Mixed Content Handling**: Non-binary text in the binary field is preserved and passed through to the text field.
 - **Two Operating Modes**:
   - **Automatic Sync**: Changes in either field automatically update the other.
   - **Manual Conversion**: Choose when to convert using dedicated buttons.
@@ -82,9 +82,7 @@ This tool works with all modern browsers that support:
 - ES6 JavaScript features
 - CSS Grid and Flexbox
 
-## License
 
-[MIT License](LICENSE)
 
 ## Contributing
 
@@ -93,4 +91,3 @@ Contributions are welcome! Feel free to submit a pull request or create an issue
 ## Acknowledgments
 
 - This project was created as an educational tool for understanding binary encoding
-- Special thanks to [Your Name/Organization] for inspiration and support
