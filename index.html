@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message.bhackr.com - Binary to Text Decoder</title>
+    <title>message.bhackr.com - Binary ↔ Text Converter</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,6 +44,11 @@
             font-family: monospace;
             font-size: 14px;
         }
+        textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
         button {
             background-color: #3498db;
             color: white;
@@ -53,14 +58,15 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-right: 10px;
         }
         button:hover {
             background-color: #2980b9;
         }
         .controls {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            justify-content: center;
+            margin: 20px 0;
         }
         .message {
             background-color: #e8f4f8;
@@ -69,99 +75,268 @@
             border-left: 4px solid #3498db;
             margin-bottom: 20px;
         }
-        .decoded-message {
-            background-color: #eafaf1;
-            padding: 15px;
+        .direction-arrows {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin: 15px 0;
+            color: #3498db;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
             border-radius: 4px;
-            border-left: 4px solid #2ecc71;
-            margin-top: 20px;
-            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+            color: #3498db;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Binary to Text Decoder</h1>
+        <h1>Binary ↔ Text Converter</h1>
         
         <div class="message">
-            <p>This tool converts binary code to readable text. Enter binary data (ones and zeros) in the input field and click "Decode" to convert it to text.</p>
+            <p>This tool lets you convert between binary and text in real-time. Changes in either field will automatically update the other!</p>
         </div>
         
-        <div class="input-group">
-            <label for="binaryInput">Binary Input:</label>
-            <textarea id="binaryInput" placeholder="Enter binary code here (e.g., 01001000 01100101 01101100 01101100 01101111)">01000011 01111010 01100101 01110011 01100011 00101100 00100000 01101010 01100101 01110011 01110100 01100101 01101101 00100000 01010100 01101111 01101101 00100001 00100000 01001111 01110100 01101111 00100000 01100101 01111000 01110000 01100101 01110010 01111001 01101101 01100101 01101110 01110100 00100000 01110011 01101111 01101100 01100101 01100011 01111010 01101110 01111001 00100000 01110100 01100101 01110011 01110100 01110101 01101010 01100001 01100011 01111001 00100000 01111010 01100100 01101111 01101100 01101110 01101111 01110011 01100011 01101001 00100000 01100001 01101100 01100111 01101111 01110010 01111001 01110100 01101101 01101111 01110111 00101110 00100000 01001010 01100101 01110011 01101100 01101001 00100000 01110100 01101111 00100000 01100011 01111010 01111001 01110100 01100001 01110011 01111010 00101100 00100000 01110011 01110100 01101111 01101001 01101110 01101001 01100101 00100001 00100000 11110000 10011111 10010011 10000001  
+        <div class="tabs">
+            <div class="tab active" id="automaticTab">Automatic Sync</div>
+            <div class="tab" id="manualTab">Manual Conversion</div>
+        </div>
+        
+        <div id="automaticMode">
+            <div class="input-group">
+                <label for="binaryInput">Binary:</label>
+                <textarea id="binaryInput" placeholder="Enter binary code here (e.g., 01001000 01100101 01101100 01101100 01101111)">01000011 01111010 01100101 01110011 01100011 00101100 00100000 01101010 01100101 01110011 01110100 01100101 01101101 00100000 01010100 01101111 01101101 00100001 00100000 01001111 01110100 01101111 00100000 01100101 01111000 01110000 01100101 01110010 01111001 01101101 01100101 01101110 01110100 00100000 01110011 01101111 01101100 01100101 01100011 01111010 01101110 01111001 00100000 01110100 01100101 01110011 01110100 01110101 01101010 01100001 01100011 01111001 00100000 01111010 01100100 01101111 01101100 01101110 01101111 01110011 01100011 01101001 00100000 01100001 01101100 01100111 01101111 01110010 01111001 01110100 01101101 01101111 01110111 00101110 00100000 01001010 01100101 01110011 01101100 01101001 00100000 01110100 01101111 00100000 01100011 01111010 01111001 01110100 01100001 01110011 01111010 00101100 00100000 01110011 01110100 01101111 01101001 01101110 01101001 01100101 00100001 00100000 11110000 10011111 10010011 10000001  
 01001111 01100100 01110111 01101001 01100101 01111010 00100000 01100010 01101000 01100001 01100011 01101011 01110010 00101110 01100011 01101111 01101101 00100000 01101111 00100000 00110001 00110011 00111010 00110000 00110000 00101110 00100000 01010000 01110010 01101111 01110011 01111010 01100101 00100000 01110000 01101111 01100100 01111010 01101001 01100101 01101100 00100000 01110011 01101001 01100101 00100000 01110100 01100001 01111100 01100001 00100000 01110111 01101001 01100001 01100100 01101111 01101101 01101111 01110011 01100011 01101001 01100001 00100000 01111010 00100000 00110011 00100000 01101111 01110011 01101111 01100010 01100001 01101101 01101001 00101110</textarea>
+            </div>
+            
+            <div class="direction-arrows">
+                <span>↑↓</span>
+            </div>
+            
+            <div class="output-group">
+                <label for="textOutput">Text:</label>
+                <textarea id="textOutput" placeholder="Enter text here to convert to binary"></textarea>
+            </div>
+            
+            <div id="statusMessage" class="status"></div>
         </div>
         
-        <div class="controls">
-            <button id="decodeBtn">Decode</button>
-            <button id="clearBtn">Clear</button>
+        <div id="manualMode" style="display: none;">
+            <div class="input-group">
+                <label for="binaryInputManual">Binary:</label>
+                <textarea id="binaryInputManual" placeholder="Enter binary code here"></textarea>
+            </div>
+            
+            <div class="controls">
+                <button id="decodeBinaryBtn">Binary → Text</button>
+                <button id="encodeTextBtn">Text → Binary</button>
+                <button id="clearBtn">Clear Both</button>
+            </div>
+            
+            <div class="output-group">
+                <label for="textOutputManual">Text:</label>
+                <textarea id="textOutputManual" placeholder="Enter text here"></textarea>
+            </div>
         </div>
-        
-        <div class="output-group">
-            <label for="textOutput">Decoded Text:</label>
-            <textarea id="textOutput" readonly placeholder="Decoded text will appear here"></textarea>
-        </div>
-        
-        <div id="decodedMessageDisplay" class="decoded-message" style="display: none;"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto sync mode elements
             const binaryInput = document.getElementById('binaryInput');
             const textOutput = document.getElementById('textOutput');
-            const decodeBtn = document.getElementById('decodeBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Manual mode elements
+            const binaryInputManual = document.getElementById('binaryInputManual');
+            const textOutputManual = document.getElementById('textOutputManual');
+            const decodeBinaryBtn = document.getElementById('decodeBinaryBtn');
+            const encodeTextBtn = document.getElementById('encodeTextBtn');
             const clearBtn = document.getElementById('clearBtn');
-            const decodedMessageDisplay = document.getElementById('decodedMessageDisplay');
             
-            // Auto-decode on page load
-            decodeBinary();
+            // Tab elements
+            const automaticTab = document.getElementById('automaticTab');
+            const manualTab = document.getElementById('manualTab');
+            const automaticMode = document.getElementById('automaticMode');
+            const manualMode = document.getElementById('manualMode');
             
-            decodeBtn.addEventListener('click', decodeBinary);
+            // Initialize with default values
+            binaryToText(binaryInput.value);
             
-            clearBtn.addEventListener('click', function() {
-                binaryInput.value = '';
-                textOutput.value = '';
-                decodedMessageDisplay.style.display = 'none';
+            // Set up event listeners for automatic sync
+            let isProcessing = false;
+            
+            binaryInput.addEventListener('input', function() {
+                if (isProcessing) return;
+                isProcessing = true;
+                try {
+                    binaryToText(this.value);
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status';
+                } catch (e) {
+                    showError('Error decoding binary: ' + e.message);
+                }
+                isProcessing = false;
             });
             
-            function decodeBinary() {
-                const binary = binaryInput.value.trim();
-                if (!binary) {
-                    textOutput.value = 'Please enter binary code';
-                    return;
+            textOutput.addEventListener('input', function() {
+                if (isProcessing) return;
+                isProcessing = true;
+                try {
+                    textToBinary(this.value);
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status';
+                } catch (e) {
+                    showError('Error encoding text: ' + e.message);
+                }
+                isProcessing = false;
+            });
+            
+            // Set up event listeners for manual mode
+            decodeBinaryBtn.addEventListener('click', function() {
+                try {
+                    const binary = binaryInputManual.value.trim();
+                    const text = decodeBinary(binary);
+                    textOutputManual.value = text;
+                } catch (e) {
+                    textOutputManual.value = 'Error: ' + e.message;
+                }
+            });
+            
+            encodeTextBtn.addEventListener('click', function() {
+                try {
+                    const text = textOutputManual.value;
+                    const binary = encodeToBinary(text);
+                    binaryInputManual.value = binary;
+                } catch (e) {
+                    binaryInputManual.value = 'Error: ' + e.message;
+                }
+            });
+            
+            clearBtn.addEventListener('click', function() {
+                binaryInputManual.value = '';
+                textOutputManual.value = '';
+            });
+            
+            // Tab switching
+            automaticTab.addEventListener('click', function() {
+                automaticTab.classList.add('active');
+                manualTab.classList.remove('active');
+                automaticMode.style.display = 'block';
+                manualMode.style.display = 'none';
+                
+                // Copy values from manual to automatic mode
+                if (binaryInputManual.value) {
+                    binaryInput.value = binaryInputManual.value;
+                    binaryToText(binaryInputManual.value);
+                }
+            });
+            
+            manualTab.addEventListener('click', function() {
+                manualTab.classList.add('active');
+                automaticTab.classList.remove('active');
+                manualMode.style.display = 'block';
+                automaticMode.style.display = 'none';
+                
+                // Copy values from automatic to manual mode
+                binaryInputManual.value = binaryInput.value;
+                textOutputManual.value = textOutput.value;
+            });
+            
+            // Helper functions
+            function binaryToText(binary) {
+                const text = decodeBinary(binary);
+                textOutput.value = text;
+            }
+            
+            function textToBinary(text) {
+                const binary = encodeToBinary(text);
+                binaryInput.value = binary;
+            }
+            
+            function decodeBinary(binary) {
+                if (!binary.trim()) {
+                    return '';
                 }
                 
-                try {
-                    // Process the binary input, allowing for spaces and line breaks
-                    const binaryGroups = binary.split(/\s+/);
-                    let result = '';
-                    
-                    // Create an array to hold all the binary values as bytes
-                    const bytes = [];
-                    for (let i = 0; i < binaryGroups.length; i++) {
-                        const group = binaryGroups[i];
-                        if (group.length > 0) {
-                            // Convert binary to byte
-                            const byte = parseInt(group, 2);
-                            bytes.push(byte);
+                // Process the binary input, allowing for spaces and line breaks
+                const binaryGroups = binary.split(/\s+/);
+                const bytes = [];
+                
+                for (let i = 0; i < binaryGroups.length; i++) {
+                    const group = binaryGroups[i];
+                    if (group.length > 0) {
+                        // Convert binary to byte
+                        const byte = parseInt(group, 2);
+                        if (isNaN(byte)) {
+                            throw new Error('Invalid binary format');
                         }
+                        bytes.push(byte);
                     }
-                    
-                    // Convert bytes to a UTF-8 string
-                    const uint8Array = new Uint8Array(bytes);
-                    const decoder = new TextDecoder('utf-8');
-                    result = decoder.decode(uint8Array);
-                    
-                    textOutput.value = result;
-                    
-                    // Display the decoded message in a nicer format
-                    decodedMessageDisplay.textContent = result;
-                    decodedMessageDisplay.style.display = 'block';
-                    
-                } catch (error) {
-                    textOutput.value = 'Error decoding: ' + error.message;
                 }
+                
+                // Convert bytes to a UTF-8 string
+                const uint8Array = new Uint8Array(bytes);
+                const decoder = new TextDecoder('utf-8');
+                return decoder.decode(uint8Array);
+            }
+            
+            function encodeToBinary(text) {
+                if (!text) {
+                    return '';
+                }
+                
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                
+                // Convert each byte to binary representation
+                return Array.from(bytes)
+                    .map(byte => byte.toString(2).padStart(8, '0'))
+                    .join(' ');
+            }
+            
+            function showError(message) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status error';
+                
+                // Clear error after a few seconds
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status';
+                }, 5000);
             }
         });
     </script>
