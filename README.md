@@ -1,8 +1,12 @@
+
+![obraz](https://github.com/user-attachments/assets/c4ccb5fe-c5ae-4091-8086-d8a9612a74ca)
+
 # message.bhacker.com - Binary ↔ Text Converter
 
 A powerful, interactive tool for converting between binary code and text with real-time color highlighting.
 
 ![Binary Text Converter Screenshot](https://via.placeholder.com/800x450)
+
 
 ## Features
 
