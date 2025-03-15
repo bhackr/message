@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const manualTab = document.getElementById('manualTab');
     const automaticMode = document.getElementById('automaticMode');
     const manualMode = document.getElementById('manualMode');
+    const graphTab = document.getElementById('graphTab');
+    const graphMode = document.getElementById('graphMode');
 
     // Generate a wide color palette for highlighting
     const colorPalette = generateColorPalette(256);
